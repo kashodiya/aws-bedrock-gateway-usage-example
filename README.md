@@ -1,15 +1,16 @@
-# AWS CLI and Claude 3.7 Integration Guide
+# AWS CLI and Claude 3.7 Integration Guide with Image Generation
 
-This repository contains scripts and examples for working with AWS CLI and Claude 3.7 through AWS Bedrock.
+This repository contains scripts and examples for working with AWS CLI, Claude 3.7, and image generation models (Stable Diffusion, Amazon Titan) through AWS Bedrock.
 
 ## Contents
 
 1. [Quick Start](#quick-start)
 2. [AWS CLI Installation](#aws-cli-installation)
 3. [Bedrock Access Gateway Installation](#bedrock-access-gateway-installation)
-4. [S3 Bucket Operations](#s3-bucket-operations)
-5. [Claude 3.7 Integration](#claude-37-integration)
-6. [Bedrock Access Gateway Usage](#bedrock-access-gateway-usage)
+4. [Image Generation with Stable Diffusion](#image-generation-with-stable-diffusion)
+5. [S3 Bucket Operations](#s3-bucket-operations)
+6. [Claude 3.7 Integration](#claude-37-integration)
+7. [Bedrock Access Gateway Usage](#bedrock-access-gateway-usage)
 
 ## Quick Start
 
@@ -102,6 +103,168 @@ python3 test_bedrock_gateway.py
 # Test with custom prompt
 python3 test_bedrock_gateway.py "What is the capital of France?"
 ```
+
+## Image Generation with Stable Diffusion
+
+This repository includes comprehensive support for generating images using AWS Bedrock's image generation models, including:
+- **Stable Diffusion** (stabilityai.stable-diffusion-3-5-large, SDXL 1.0)
+- **Amazon Titan Image Generator** (v1 and v2)
+
+### Quick Start for Image Generation
+
+1. **Generate an image with default settings:**
+```bash
+python3 setup_stable_diffusion.py "A beautiful sunset over mountains"
+```
+
+2. **View available image generation models:**
+```bash
+python3 setup_stable_diffusion.py --list-models
+```
+
+3. **Get setup instructions:**
+```bash
+python3 setup_stable_diffusion.py --setup-help
+```
+
+### Available Scripts
+
+#### `setup_stable_diffusion.py`
+Comprehensive image generation script with support for multiple models:
+- Automatically tries multiple models until one succeeds
+- Supports both Stable Diffusion and Amazon Titan models
+- Saves generated images as PNG files
+- Provides detailed error messages and troubleshooting steps
+
+**Usage:**
+```bash
+# Generate with a custom prompt
+python3 setup_stable_diffusion.py "A majestic dragon flying over a castle"
+
+# List available models
+python3 setup_stable_diffusion.py --list-models
+
+# Use a different AWS region
+python3 setup_stable_diffusion.py --region us-west-2 "Your prompt"
+
+# Show setup instructions
+python3 setup_stable_diffusion.py --setup-help
+```
+
+#### `stable_diffusion_image_generator.py`
+Alternative image generation script that works with both the Bedrock Gateway and direct API:
+- Attempts to use the Bedrock Access Gateway first
+- Falls back to direct Bedrock API calls
+- Supports multiple model IDs
+- Includes base64 image decoding and saving
+
+**Usage:**
+```bash
+python3 stable_diffusion_image_generator.py "A futuristic city at night"
+```
+
+#### `image_viewer.py`
+Web-based image gallery to view generated images:
+- Displays all generated images in a grid layout
+- Shows image metadata (model, size, timestamp)
+- Automatically refreshes to show new images
+- Runs on port 57798
+
+**Usage:**
+```bash
+# Start the image viewer server
+python3 image_viewer.py
+
+# Access at: http://localhost:57798
+```
+
+### Supported Models
+
+The following image generation models are available through AWS Bedrock:
+
+| Model ID | Provider | Description | Inference Type |
+|----------|----------|-------------|----------------|
+| `amazon.titan-image-generator-v1` | Amazon | Titan Image Generator v1 | ON_DEMAND |
+| `amazon.titan-image-generator-v2:0` | Amazon | Titan Image Generator v2 | ON_DEMAND/PROVISIONED |
+| `stability.stable-diffusion-xl-v1` | Stability AI | SDXL 1.0 | ON_DEMAND |
+| `stabilityai.stable-diffusion-3-5-large` | Stability AI | SD 3.5 Large | Requires setup |
+
+### Model Setup Requirements
+
+To use Stable Diffusion models, you need to:
+
+1. **Enable Model Access:**
+   - Go to [AWS Bedrock Console](https://console.aws.amazon.com/bedrock/)
+   - Navigate to "Model access"
+   - Request access to Stability AI and Amazon Titan models
+
+2. **Check Regional Availability:**
+   - Image models are available in: us-east-1, us-west-2, eu-west-1
+   - Some models may require specific regions
+
+3. **IAM Permissions:**
+   Ensure your AWS user/role has these permissions:
+   ```json
+   {
+       "Version": "2012-10-17",
+       "Statement": [
+           {
+               "Effect": "Allow",
+               "Action": [
+                   "bedrock:InvokeModel",
+                   "bedrock:ListFoundationModels"
+               ],
+               "Resource": "*"
+           }
+       ]
+   }
+   ```
+
+### Example: Complete Image Generation Workflow
+
+```bash
+# 1. Start the Bedrock Gateway (if not already running)
+./install_run_bedrock_gateway.sh --background --port 50399
+
+# 2. Generate an image
+python3 setup_stable_diffusion.py "A magical forest with glowing mushrooms, fantasy art style"
+
+# 3. Start the image viewer
+python3 image_viewer.py
+
+# 4. Open browser to view images
+# Navigate to: http://localhost:57798
+
+# 5. Generate more images with different prompts
+python3 setup_stable_diffusion.py "A steampunk airship flying through clouds"
+python3 setup_stable_diffusion.py "An underwater city with bioluminescent buildings"
+```
+
+### Troubleshooting Image Generation
+
+If image generation fails:
+
+1. **Model not available:**
+   - Check model access in AWS Bedrock console
+   - Try a different region: `--region us-west-2`
+
+2. **Provisioned throughput required:**
+   - Some models need provisioned throughput
+   - Use Amazon Titan models for on-demand access
+
+3. **Invalid model identifier:**
+   - Run `--list-models` to see available models
+   - Check the exact model ID in your region
+
+4. **Authentication issues:**
+   - Verify AWS credentials: `aws sts get-caller-identity`
+   - Check IAM permissions for Bedrock
+
+### Generated Image Files
+
+Images are saved with descriptive filenames:
+- Format: `generated_image_{model}_{timestamp}_{index}.png`
+- Example: `generated_image_amazon_titan-image-generator-v1_20250830_033408_0.png`
 
 ## S3 Bucket Operations
 

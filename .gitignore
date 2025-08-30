@@ -157,3 +157,14 @@ server.log
 ehthumbs.db
 Thumbs.db
 
+# Generated images
+generated_image_*.png
+generated_image_*.jpg
+generated_image_*.jpeg
+*.png
+*.jpg
+*.jpeg
+
+# Server logs
+image_server.log
+test_bedrock_gateway.py
